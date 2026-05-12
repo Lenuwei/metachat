@@ -1286,13 +1286,17 @@ def main():
                 mime="application/json",
             )
 
-    # Поле ввода (перед отображением, чтобы обработанные сообщения сразу показывались)
+    # Поле ввода (ключ от состояния предотвращает дублирование на rerun)
     if st.session_state.current_state != "end":
-        user_input = st.chat_input("Type your answer here...")
+        user_input = st.chat_input("Type your answer here...", key=f"ci_{st.session_state.current_state}")
         if user_input:
+            old_state = st.session_state.current_state
             process_input(user_input)
-            if st.session_state.current_state == "end":
+            if st.session_state.current_state != old_state:
                 st.rerun()
+    else:
+        st.success("🎉 Session completed! Don't forget to export your chat history.")
+        st.balloons()
 
     # Отображение истории чата
     for message in st.session_state.chat_history:
