@@ -949,7 +949,7 @@ def process_input(user_input):
                     }
                 )
                 return
-            elif "task_2" in st.session_state.current_state:
+            elif "feedback_2" in st.session_state.current_state:
                 st.session_state.current_state = "roleplay_intro"
                 st.session_state.chat_history.append(
                     {
