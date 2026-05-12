@@ -1290,7 +1290,8 @@ def main():
 
     # Поле ввода
     if st.session_state.current_state != "end":
-        user_input = st.text_input("Type your answer here...", key="input_main")
+        turn = st.session_state.get("_turn", 0)
+        user_input = st.text_input("Type your answer here...", key=f"inp_{turn}")
         if user_input:
             last = st.session_state.get("_last", "")
             if user_input != last:
@@ -1298,7 +1299,7 @@ def main():
                 old_state = st.session_state.current_state
                 process_input(user_input)
                 if st.session_state.current_state != old_state:
-                    st.session_state["input_main"] = ""
+                    st.session_state._turn = turn + 1
                     st.rerun()
     else:
         st.success("🎉 Session completed! Don't forget to export your chat history.")
