@@ -703,6 +703,7 @@ def process_input(user_input):
     print(
         f"DEBUG process_input: user_input='{user_input}', current_state='{st.session_state.current_state}'"
     )
+    user_input = user_input.strip()
     current_state_obj = st.session_state.scenario["states"][
         st.session_state.current_state
     ]
@@ -1294,12 +1295,10 @@ def main():
             with st.chat_message("assistant"):
                 st.markdown(message["content"])
 
-    # Поле ввода — форма с очисткой после отправки (надёжнее на мобильных)
+    # Поле ввода
     if st.session_state.current_state != "end":
-        with st.form(key="chat_form", clear_on_submit=True):
-            user_input = st.text_input("Type your answer here...", placeholder="Type your answer here...")
-            submitted = st.form_submit_button("Send", type="primary", use_container_width=True)
-        if submitted and user_input:
+        user_input = st.chat_input("Type your answer here...")
+        if user_input:
             old_state = st.session_state.current_state
             process_input(user_input)
             if st.session_state.current_state != old_state:
