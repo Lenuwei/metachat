@@ -789,7 +789,6 @@ def process_input(user_input):
     # ========== ВАЛИДАЦИЯ ВВОДА (до сохранения в историю) ==========
     if "validation" in current_state_obj:
         if not re.match(current_state_obj["validation"], user_input):
-            st.warning("⚠️ Please enter the data in the correct format. Try again.")
             return
 
     # ========== СОХРАНЯЕМ ОТВЕТ В ИСТОРИЮ ==========
@@ -835,14 +834,8 @@ def process_input(user_input):
                 )
                 return
             else:
-                st.warning(
-                    "⚠️ Please enter three numbers between 1 and 5, separated by spaces."
-                )
                 return
         except:
-            st.warning(
-                "⚠️ Please enter three numbers between 1 and 5, separated by spaces."
-            )
             return
 
     if st.session_state.current_state == "level_assessment":
@@ -862,7 +855,6 @@ def process_input(user_input):
             )
             return
         else:
-            st.warning("⚠️ Please enter 1, 2, or 3.")
             return
 
     # Для posttest с валидацией
@@ -882,14 +874,8 @@ def process_input(user_input):
                 )
                 return
             else:
-                st.warning(
-                    "⚠️ Please enter three numbers between 1 and 5, separated by spaces."
-                )
                 return
         except:
-            st.warning(
-                "⚠️ Please enter three numbers between 1 and 5, separated by spaces."
-            )
             return
 
     # ========== ОБРАБОТКА КОМАНД В ФИДБЕКАХ РОЛЕЙ ==========
@@ -930,7 +916,6 @@ def process_input(user_input):
             )
             return
         else:
-            st.warning("⚠️ Please type 'revise', 'next', or 'back'.")
             return
 
     # ========== ОБРАБОТКА КОМАНД В АНАЛИЗЕ ==========
@@ -1003,7 +988,6 @@ def process_input(user_input):
             )
             return
         else:
-            st.warning("⚠️ Please type 1 (ANALYSIS) or 2 (ROLE-PLAY).")
             return
 
     # Для выбора роли
@@ -1054,7 +1038,6 @@ def process_input(user_input):
             )
             return
         else:
-            st.warning("⚠️ Please type a number from 1 to 9, or 'finish'.")
             return
 
     # Для команды continue в roleplay_intro
@@ -1083,7 +1066,6 @@ def process_input(user_input):
             )
             return
         else:
-            st.warning("⚠️ Please type 'continue' to proceed or 'back' to return.")
             return
 
     # Для команды yes в analysis_intro
@@ -1104,7 +1086,6 @@ def process_input(user_input):
             )
             return
         elif user_input.lower() != "back":  # Don't warn if it's 'back' (handled above)
-            st.warning("⚠️ Please type 'yes' to start or 'back' to return.")
             return
 
     # Для заданий анализа (Task 1, Task 2)
@@ -1135,7 +1116,6 @@ def process_input(user_input):
             )
             return
         else:
-            st.warning("⚠️ Please type 'exit' to close the session.")
             return
 
     # ========== СТАНДАРТНЫЙ ПЕРЕХОД НА СЛЕДУЮЩЕЕ СОСТОЯНИЕ ==========
