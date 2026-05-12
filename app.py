@@ -229,7 +229,7 @@ SCENARIO = {
         "pretest": {
             "message": "**📋 PRE-TEST: Diagnostic Assessment**\n\nBefore we begin the training, please rate these three messages on a scale from 1 (destructive) to 5 (constructive):\n\n1▪️'Your idea is wrong. Fix it.'\n\n2▪️'I see your point, but have you considered... 🤔'\n\n3▪️'THIS IS TERRIBLE!!!'\n\n▶️ **Type three numbers separated by spaces (e.g., '1 5 2') and press Enter:**",
             "input_type": "text",
-            "validation": r"^[1-5]\s+[1-5]\s+[1-5]$",
+            "validation": r"^[1-5] [1-5] [1-5]$",
             "next_state": "level_assessment",
         },
         "level_assessment": {
@@ -365,7 +365,10 @@ SCENARIO = {
                 "continue": "View Available Roles",
                 "back": "Back to Main Menu",
             },
-            "next_state": "role_menu",
+            "next_state": {
+                "continue": "role_menu",
+                "back": "after_registration_{level}",
+            },
         },
         "role_menu": {
             "message": "**❇️ CONSTRUCTIVE COMMUNICATIVE ROLES**\n\nChoose a role to practice:\n\n**CONFLICT REGULATORS:**\n🔹1 - Mediator (de-escalates conflicts)\n🔹2 - Logical Expert (highlights contradictions)\n🔹6 - Advocate (defends a person/idea)\n🔹7 - Judge (evaluates arguments)\n🔹8 - Peacemaker (offers compromise)\n\n**SUPPORTING ROLES:**\n🔹3 - Idea Generator (creative thinking)\n🔹4 - Researcher (cultural inquiry)\n🔹5 - Interpreter (cultural bridging)\n\n**EMOTIONAL ROLES:**\n🔹9 - Empath (emotional support)\n\n📌 **Type the number (1-9) to choose a role, or type 'finish' to proceed to reflection:**",
@@ -521,9 +524,9 @@ SCENARIO = {
             "next_state": "posttest",
         },
         "posttest": {
-            "message": "**📋 POST-TEST**\n\nRate the same three messages again (on a scale from 1 (destructive) to 5 (constructive)):\n\n1▪️'Your idea is wrong. Fix it.'\n\n2▪️'I see your point, but have you considered... 🤔'\n\n3▪️'THIS IS TERRIBLE!!!'\n\n▶️ **Type three numbers (e.g., '1 5 2'):**",
+            "message": "**📋 POST-TEST**\n\nRate the same three messages again:\n\n1▪️'Your idea is wrong. Fix it.'\n\n2▪️'I see your point, but have you considered... 🤔'\n\n3▪️'THIS IS TERRIBLE!!!'\n\n▶️ **Type three numbers (e.g., '1 5 2'):**",
             "input_type": "text",
-            "validation": r"^[1-5]\s+[1-5]\s+[1-5]$",
+            "validation": r"^[1-5] [1-5] [1-5]$",
             "next_state": "data_collection",
         },
         "data_collection": {
@@ -606,13 +609,6 @@ def init_session_state():
     """Инициализирует переменные состояния Streamlit"""
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
-        # Add welcome message as first bot message
-        st.session_state.chat_history.append({
-            "role": "assistant",
-            "content": "🔬 **WELCOME TO METACHAT TUTOR - RESEARCH EDITION**\n\n📝 **Type down your name and group (e.g., Aida V. 101 bsufl):**",
-            "state": "start",
-            "timestamp": datetime.now().isoformat(),
-        })
     if "current_state" not in st.session_state:
         st.session_state.current_state = "start"
     if "user_data" not in st.session_state:
@@ -655,22 +651,17 @@ def get_current_message():
         task_state = f"role_{role_slug}"
         if task_state in st.session_state.scenario["states"]:
             task_context = st.session_state.scenario["states"][task_state]["message"]
-            print(f"DEBUG roleplay feedback: state={cs}, task_state={task_state}, task_context_len={len(task_context)}")
 
     user_answer = st.session_state.chat_history[-1]["content"]
 
     if task_context and st.session_state.user_data["user_name"] and st.session_state.user_data["level"]:
-        try:
-            llm_out = get_llm_feedback(
-                user_name=st.session_state.user_data["user_name"],
-                level=st.session_state.user_data["level"],
-                role_name=st.session_state.user_data["current_role"],
-                user_answer=user_answer,
-                task_question=task_context,
-            )
-        except Exception as e:
-            print(f"DEBUG get_current_message: LLM error: {e}")
-            llm_out = ""
+        llm_out = get_llm_feedback(
+            user_name=st.session_state.user_data["user_name"],
+            level=st.session_state.user_data["level"],
+            role_name=st.session_state.user_data["current_role"],
+            user_answer=user_answer,
+            task_question=task_context,
+        )
         if llm_out:
             # Replace the static evaluation with LLM feedback, keep header + model answer + instruction
             for marker in ["\n\n**📋 Model answer:**", "\n\n▶️"]:
@@ -700,7 +691,6 @@ def process_input(user_input):
     print(
         f"DEBUG process_input: user_input='{user_input}', current_state='{st.session_state.current_state}'"
     )
-    user_input = user_input.strip()
     current_state_obj = st.session_state.scenario["states"][
         st.session_state.current_state
     ]
@@ -783,38 +773,6 @@ def process_input(user_input):
             )
             return
 
-    # ========== ОБРАБОТКА КОМАНДЫ 'back' В ПРЕТЕСТ И УРОВНЕ ==========
-    if st.session_state.current_state == "pretest":
-        if user_input.lower() == "back":
-            st.session_state.current_state = "start"
-            st.session_state.chat_history.append(
-                {
-                    "role": "assistant",
-                    "content": get_current_message(),
-                    "state": st.session_state.current_state,
-                    "timestamp": datetime.now().isoformat(),
-                }
-            )
-            return
-
-    if st.session_state.current_state == "level_assessment":
-        if user_input.lower() == "back":
-            st.session_state.current_state = "pretest"
-            st.session_state.chat_history.append(
-                {
-                    "role": "assistant",
-                    "content": get_current_message(),
-                    "state": st.session_state.current_state,
-                    "timestamp": datetime.now().isoformat(),
-                }
-            )
-            return
-
-    # ========== ВАЛИДАЦИЯ ВВОДА (до сохранения в историю) ==========
-    if "validation" in current_state_obj:
-        if not re.match(current_state_obj["validation"], user_input):
-            return
-
     # ========== СОХРАНЯЕМ ОТВЕТ В ИСТОРИЮ ==========
     st.session_state.chat_history.append(
         {
@@ -825,9 +783,17 @@ def process_input(user_input):
         }
     )
 
+    # ========== ВАЛИДАЦИЯ ВВОДА ==========
+    if "validation" in current_state_obj:
+        if not re.match(current_state_obj["validation"], user_input):
+            st.warning("⚠️ Please enter the data in the correct format. Try again.")
+            return
+
     # ========== СОХРАНЯЕМ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ ==========
     if st.session_state.current_state == "start":
-        st.session_state.user_data["user_name"] = user_input.strip()
+        st.session_state.user_data["user_name"] = (
+            user_input.split()[0] if user_input.split() else user_input
+        )
         st.session_state.current_state = "pretest"
         st.session_state.chat_history.append(
             {
@@ -856,8 +822,14 @@ def process_input(user_input):
                 )
                 return
             else:
+                st.warning(
+                    "⚠️ Please enter three numbers between 1 and 5, separated by spaces."
+                )
                 return
         except:
+            st.warning(
+                "⚠️ Please enter three numbers between 1 and 5, separated by spaces."
+            )
             return
 
     if st.session_state.current_state == "level_assessment":
@@ -877,6 +849,7 @@ def process_input(user_input):
             )
             return
         else:
+            st.warning("⚠️ Please enter 1, 2, or 3.")
             return
 
     # Для posttest с валидацией
@@ -896,8 +869,14 @@ def process_input(user_input):
                 )
                 return
             else:
+                st.warning(
+                    "⚠️ Please enter three numbers between 1 and 5, separated by spaces."
+                )
                 return
         except:
+            st.warning(
+                "⚠️ Please enter three numbers between 1 and 5, separated by spaces."
+            )
             return
 
     # ========== ОБРАБОТКА КОМАНД В ФИДБЕКАХ РОЛЕЙ ==========
@@ -938,14 +917,16 @@ def process_input(user_input):
             )
             return
         else:
+            st.warning("⚠️ Please type 'revise', 'next', or 'back'.")
             return
 
     # ========== ОБРАБОТКА КОМАНД В АНАЛИЗЕ ==========
     if "analysis_feedback_" in st.session_state.current_state:
-        cmd = user_input.lower()
-        if cmd == "next":
-            if "feedback_1" in st.session_state.current_state:
-                new_state = st.session_state.current_state.replace("feedback_1", "task_2")
+        if user_input.lower() == "next":
+            if "task_1" in st.session_state.current_state:
+                new_state = st.session_state.current_state.replace(
+                    "feedback_1", "task_2"
+                )
                 st.session_state.current_state = new_state
                 st.session_state.chat_history.append(
                     {
@@ -956,7 +937,7 @@ def process_input(user_input):
                     }
                 )
                 return
-            elif "feedback_2" in st.session_state.current_state:
+            elif "task_2" in st.session_state.current_state:
                 st.session_state.current_state = "roleplay_intro"
                 st.session_state.chat_history.append(
                     {
@@ -967,7 +948,7 @@ def process_input(user_input):
                     }
                 )
                 return
-        elif cmd == "back":
+        elif user_input.lower() == "back":
             level = st.session_state.user_data.get("level", "beginner")
             st.session_state.current_state = f"analysis_intro_{level}"
             st.session_state.chat_history.append(
@@ -978,8 +959,6 @@ def process_input(user_input):
                     "timestamp": datetime.now().isoformat(),
                 }
             )
-            return
-        else:
             return
 
     # Для выбора Step 1 или Step 2
@@ -1011,6 +990,7 @@ def process_input(user_input):
             )
             return
         else:
+            st.warning("⚠️ Please type 1 (ANALYSIS) or 2 (ROLE-PLAY).")
             return
 
     # Для выбора роли
@@ -1061,9 +1041,10 @@ def process_input(user_input):
             )
             return
         else:
+            st.warning("⚠️ Please type a number from 1 to 9, or 'finish'.")
             return
 
-    # Для команды back в roleplay_intro
+    # Для команды continue в roleplay_intro
     if st.session_state.current_state == "roleplay_intro":
         if user_input.lower() == "continue":
             st.session_state.current_state = "role_menu"
@@ -1077,7 +1058,7 @@ def process_input(user_input):
             )
             return
         elif user_input.lower() == "back":
-            level = st.session_state.user_data.get("level", "intermediate")
+            level = st.session_state.user_data.get("level", "beginner")
             st.session_state.current_state = f"after_registration_{level}"
             st.session_state.chat_history.append(
                 {
@@ -1089,6 +1070,7 @@ def process_input(user_input):
             )
             return
         else:
+            st.warning("⚠️ Please type 'continue' to proceed or 'back' to return.")
             return
 
     # Для команды yes в analysis_intro
@@ -1109,6 +1091,7 @@ def process_input(user_input):
             )
             return
         elif user_input.lower() != "back":  # Don't warn if it's 'back' (handled above)
+            st.warning("⚠️ Please type 'yes' to start or 'back' to return.")
             return
 
     # Для заданий анализа (Task 1, Task 2)
@@ -1139,6 +1122,7 @@ def process_input(user_input):
             )
             return
         else:
+            st.warning("⚠️ Please type 'exit' to close the session.")
             return
 
     # ========== СТАНДАРТНЫЙ ПЕРЕХОД НА СЛЕДУЮЩЕЕ СОСТОЯНИЕ ==========
@@ -1150,7 +1134,7 @@ def process_input(user_input):
             elif "default" in next_state:
                 st.session_state.current_state = next_state["default"]
             else:
-                return
+                st.session_state.current_state = "end"
         else:
             st.session_state.current_state = next_state
     elif "options" in current_state_obj and user_input in current_state_obj["options"]:
@@ -1178,19 +1162,19 @@ def get_llm_feedback(user_answer, role_name, user_name, level, task_question=Non
         safe = user_answer[:200]
         if "TASK 1" in task_question:
             return (
-                f"**LLM Feedback (Demo - no API key):** You responded with: \"{safe}\". "
-                f"The emoji you chose may not match the intent of softening criticism. "
-                f"A friendly emoji like a smiley or wink can make criticism feel more supportive."
+                f"**🤖 LLM Feedback (Demo — no API key):** You responded with: \"{safe}\". "
+                f"The emojis you used may not match the intent of softening criticism. "
+                f"Adding a friendly emoji like 🙂 or 😊 can make criticism feel more supportive."
             )
         elif "TASK 2" in task_question:
             return (
-                f"**LLM Feedback (Demo - no API key):** You identified: \"{safe}\". "
+                f"**🤖 LLM Feedback (Demo — no API key):** You identified: \"{safe}\". "
                 f"Good observation! Remember that combining "
                 f"multiple metagraheme techniques creates stronger effects."
             )
         else:
             return (
-                f"**LLM Feedback (Demo - no API key):** You wrote: \"{safe}\". "
+                f"**🤖 LLM Feedback (Demo — no API key):** You wrote: \"{safe}\". "
                 f"Review the criteria above and check if your response "
                 f"addresses all the requirements for this role."
             )
@@ -1204,14 +1188,14 @@ def get_llm_feedback(user_answer, role_name, user_name, level, task_question=Non
     prompt = (
         f"{THEORETICAL_BASE}\n\n"
         "Always use English to respond.\n"
+        "When discussing emojis, use the actual Unicode emoji character (e.g., 🙂 not the word 'smiley').\n"
         f"Student: {user_name}\nLevel: {level}\nSelected role: {role_name or 'none'}\n\n"
         f"--- TASK QUESTION ---\n{task_question}\n\n"
         f"--- STUDENT ANSWER ---\n{user_answer}\n\n"
         f"--- INSTRUCTION ---\n"
-        f"Address the student by their name ({user_name}) in the first sentence. "
-        f"Evaluate their answer based on the theoretical framework above. "
+        f"Evaluate the student's answer based on the theoretical framework above. "
         f"Check whether they identified/applied metagraheme tools correctly for their level. "
-        f"Give brief constructive feedback (max 500 characters, 2-4 sentences). "
+        f"Give brief constructive feedback (max 500 characters). "
         f"Be supportive and specific."
     )
 
@@ -1235,7 +1219,6 @@ def get_llm_feedback(user_answer, role_name, user_name, level, task_question=Non
         try:
             print(f"DEBUG get_llm_feedback: trying {label} at {url}")
             response = requests.post(url, headers=headers, json=payload, timeout=60)
-            response.encoding = "utf-8"
             result = response.json()
             print(f"DEBUG get_llm_feedback: {label} status={response.status_code}")
 
@@ -1263,6 +1246,10 @@ def main():
 
     # Инициализация
     init_session_state()
+
+    # Приветственное сообщение, если история пуста
+    if not st.session_state.chat_history:
+        st.info("📝 **Type down your name and group (e.g., Aida V. 101 bsufl)**")
 
     # Боковая панель
     with st.sidebar:
@@ -1298,17 +1285,16 @@ def main():
             with st.chat_message("assistant"):
                 st.markdown(message["content"])
 
-    # Поле ввода (если не конец)
+    # Поле ввода
     if st.session_state.current_state != "end":
         user_input = st.chat_input("Type your answer here...")
         if user_input:
-            old_state = st.session_state.current_state
             process_input(user_input)
-            if st.session_state.current_state != old_state:
-                st.rerun()
+            st.rerun()
     else:
         st.success("🎉 Session completed! Don't forget to export your chat history.")
         st.balloons()
+
 
 if __name__ == "__main__":
     main()
