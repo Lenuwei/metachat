@@ -1195,7 +1195,7 @@ def get_llm_feedback(user_answer, role_name, user_name, level, task_question=Non
     prompt = (
         f"{THEORETICAL_BASE}\n\n"
         "Always use English to respond.\n"
-        "When discussing emojis, use the actual Unicode emoji character (e.g., 🙂 not the word 'smiley').\n"
+        "When discussing emojis, describe them in words (e.g., 'smiling face', 'angry face').\n"
         f"Student: {user_name}\nLevel: {level}\nSelected role: {role_name or 'none'}\n\n"
         f"--- TASK QUESTION ---\n{task_question}\n\n"
         f"--- STUDENT ANSWER ---\n{user_answer}\n\n"
@@ -1226,6 +1226,7 @@ def get_llm_feedback(user_answer, role_name, user_name, level, task_question=Non
         try:
             print(f"DEBUG get_llm_feedback: trying {label} at {url}")
             response = requests.post(url, headers=headers, json=payload, timeout=60)
+            response.encoding = "utf-8"
             result = response.json()
             print(f"DEBUG get_llm_feedback: {label} status={response.status_code}")
 
