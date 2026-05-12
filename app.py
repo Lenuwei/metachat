@@ -658,6 +658,7 @@ def get_current_message():
         task_state = f"role_{role_slug}"
         if task_state in st.session_state.scenario["states"]:
             task_context = st.session_state.scenario["states"][task_state]["message"]
+            print(f"DEBUG roleplay feedback: state={cs}, task_state={task_state}, task_context_len={len(task_context)}")
 
     user_answer = st.session_state.chat_history[-1]["content"]
 
@@ -1218,8 +1219,8 @@ def get_llm_feedback(user_answer, role_name, user_name, level, task_question=Non
     legacy_url = base + "/completions"
 
     attempts = [
-        ("chat", chat_url, {"model": LLM_MODEL, "messages": [{"role": "user", "content": prompt}], "max_tokens": 150}),
-        ("legacy", legacy_url, {"prompt": prompt, "max_tokens": 150}),
+        ("chat", chat_url, {"model": LLM_MODEL, "messages": [{"role": "user", "content": prompt}], "max_tokens": 300}),
+        ("legacy", legacy_url, {"prompt": prompt, "max_tokens": 300}),
     ]
 
     for label, url, payload in attempts:
