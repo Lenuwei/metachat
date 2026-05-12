@@ -1293,9 +1293,9 @@ def main():
         turn = st.session_state.get("_turn", 0)
         user_input = st.text_input("Type your answer here...", key=f"inp_{turn}")
         if user_input:
-            last = st.session_state.get("_last", "")
-            if user_input != last:
-                st.session_state._last = user_input
+            key = f"{st.session_state.current_state}|{turn}"
+            if st.session_state.get("_last_key", "") != key:
+                st.session_state._last_key = key
                 old_state = st.session_state.current_state
                 process_input(user_input)
                 if st.session_state.current_state != old_state:
