@@ -918,7 +918,7 @@ def process_input(user_input):
         else:
             return
 
-        # ========== ОБРАБОТКА КОМАНД В АНАЛИЗЕ ==========
+    # ========== ОБРАБОТКА КОМАНД В АНАЛИЗЕ ==========
     if "analysis_feedback_" in st.session_state.current_state:
         cmd = user_input.lower()
         if cmd == "next":
@@ -958,8 +958,6 @@ def process_input(user_input):
             )
             return
         else:
-            # Некорректный ввод: показываем предупреждение и ничего не меняем
-            st.warning("⚠️ Please type 'next' to continue or 'back' to return to the menu.")
             return
 
     # Для выбора Step 1 или Step 2
@@ -1130,7 +1128,7 @@ def process_input(user_input):
             elif "default" in next_state:
                 st.session_state.current_state = next_state["default"]
             else:
-                st.session_state.current_state = "end"
+                return
         else:
             st.session_state.current_state = next_state
     elif "options" in current_state_obj and user_input in current_state_obj["options"]:
