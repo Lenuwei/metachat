@@ -918,13 +918,12 @@ def process_input(user_input):
         else:
             return
 
-    # ========== ОБРАБОТКА КОМАНД В АНАЛИЗЕ ==========
+        # ========== ОБРАБОТКА КОМАНД В АНАЛИЗЕ ==========
     if "analysis_feedback_" in st.session_state.current_state:
-        if user_input.lower() == "next":
+        cmd = user_input.lower()
+        if cmd == "next":
             if "feedback_1" in st.session_state.current_state:
-                new_state = st.session_state.current_state.replace(
-                    "feedback_1", "task_2"
-                )
+                new_state = st.session_state.current_state.replace("feedback_1", "task_2")
                 st.session_state.current_state = new_state
                 st.session_state.chat_history.append(
                     {
@@ -946,7 +945,7 @@ def process_input(user_input):
                     }
                 )
                 return
-        elif user_input.lower() == "back":
+        elif cmd == "back":
             level = st.session_state.user_data.get("level", "beginner")
             st.session_state.current_state = f"analysis_intro_{level}"
             st.session_state.chat_history.append(
@@ -957,6 +956,10 @@ def process_input(user_input):
                     "timestamp": datetime.now().isoformat(),
                 }
             )
+            return
+        else:
+            # Некорректный ввод: показываем предупреждение и ничего не меняем
+            st.warning("⚠️ Please type 'next' to continue or 'back' to return to the menu.")
             return
 
     # Для выбора Step 1 или Step 2
@@ -1275,7 +1278,7 @@ def main():
             with st.chat_message("assistant"):
                 st.markdown(message["content"])
 
-    # Поле ввода
+    # Поле ввода (если не конец)
     if st.session_state.current_state != "end":
         user_input = st.chat_input("Type your answer here...")
         if user_input:
@@ -1286,17 +1289,6 @@ def main():
     else:
         st.success("🎉 Session completed! Don't forget to export your chat history.")
         st.balloons()
-        if message["role"] == "user":
-            st.chat_message("user").write(message["content"])
-        else:
-            with st.chat_message("assistant"):
-                st.markdown(message["content"])
-
-    # Сообщение о завершении
-    if st.session_state.current_state == "end":
-        st.success("🎉 Session completed! Don't forget to export your chat history.")
-        st.balloons()
-
 
 if __name__ == "__main__":
     main()
