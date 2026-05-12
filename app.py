@@ -1286,6 +1286,14 @@ def main():
                 mime="application/json",
             )
 
+    # Поле ввода (перед отображением, чтобы обработанные сообщения сразу показывались)
+    if st.session_state.current_state != "end":
+        user_input = st.chat_input("Type your answer here...")
+        if user_input:
+            process_input(user_input)
+            if st.session_state.current_state == "end":
+                st.rerun()
+
     # Отображение истории чата
     for message in st.session_state.chat_history:
         if message["role"] == "user":
@@ -1294,19 +1302,8 @@ def main():
             with st.chat_message("assistant"):
                 st.markdown(message["content"])
 
-    # Поле ввода
-    if st.session_state.current_state != "end":
-        user_input = st.chat_input("Type your answer here...")
-        if user_input:
-            if st.session_state.pop("_skip_next", False):
-                pass
-            else:
-                old_state = st.session_state.current_state
-                process_input(user_input)
-                if st.session_state.current_state != old_state:
-                    st.session_state._skip_next = True
-                    st.rerun()
-    else:
+    # Сообщение о завершении
+    if st.session_state.current_state == "end":
         st.success("🎉 Session completed! Don't forget to export your chat history.")
         st.balloons()
 
