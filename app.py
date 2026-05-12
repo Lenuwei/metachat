@@ -663,13 +663,17 @@ def get_current_message():
     user_answer = st.session_state.chat_history[-1]["content"]
 
     if task_context and st.session_state.user_data["user_name"] and st.session_state.user_data["level"]:
-        llm_out = get_llm_feedback(
-            user_name=st.session_state.user_data["user_name"],
-            level=st.session_state.user_data["level"],
-            role_name=st.session_state.user_data["current_role"],
-            user_answer=user_answer,
-            task_question=task_context,
-        )
+        try:
+            llm_out = get_llm_feedback(
+                user_name=st.session_state.user_data["user_name"],
+                level=st.session_state.user_data["level"],
+                role_name=st.session_state.user_data["current_role"],
+                user_answer=user_answer,
+                task_question=task_context,
+            )
+        except Exception as e:
+            print(f"DEBUG get_current_message: LLM error: {e}")
+            llm_out = ""
         if llm_out:
             # Replace the static evaluation with LLM feedback, keep header + model answer + instruction
             for marker in ["\n\n**📋 Model answer:**", "\n\n▶️"]:
