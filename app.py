@@ -1169,19 +1169,19 @@ def get_llm_feedback(user_answer, role_name, user_name, level, task_question=Non
         safe = user_answer[:200]
         if "TASK 1" in task_question:
             return (
-                f"**🤖 LLM Feedback (Demo — no API key):** You responded with: \"{safe}\". "
-                f"The emojis you used may not match the intent of softening criticism. "
-                f"Adding a friendly emoji like 🙂 or 😊 can make criticism feel more supportive."
+                f"**LLM Feedback (Demo - no API key):** You responded with: \"{safe}\". "
+                f"The emoji you chose may not match the intent of softening criticism. "
+                f"A friendly emoji like a smiley or wink can make criticism feel more supportive."
             )
         elif "TASK 2" in task_question:
             return (
-                f"**🤖 LLM Feedback (Demo — no API key):** You identified: \"{safe}\". "
+                f"**LLM Feedback (Demo - no API key):** You identified: \"{safe}\". "
                 f"Good observation! Remember that combining "
                 f"multiple metagraheme techniques creates stronger effects."
             )
         else:
             return (
-                f"**🤖 LLM Feedback (Demo — no API key):** You wrote: \"{safe}\". "
+                f"**LLM Feedback (Demo - no API key):** You wrote: \"{safe}\". "
                 f"Review the criteria above and check if your response "
                 f"addresses all the requirements for this role."
             )
@@ -1291,17 +1291,12 @@ def main():
 
     # Поле ввода
     if st.session_state.current_state != "end":
-        turn = st.session_state.get("_turn", 0)
-        user_input = st.text_input("Type your answer here...", key=f"inp_{turn}")
+        user_input = st.chat_input("Type your answer here...")
         if user_input:
-            key = f"{st.session_state.current_state}|{turn}"
-            if st.session_state.get("_last_key", "") != key:
-                st.session_state._last_key = key
-                old_state = st.session_state.current_state
-                process_input(user_input)
-                if st.session_state.current_state != old_state:
-                    st.session_state._turn = turn + 1
-                    st.rerun()
+            old_state = st.session_state.current_state
+            process_input(user_input)
+            if st.session_state.current_state != old_state:
+                st.rerun()
     else:
         st.success("🎉 Session completed! Don't forget to export your chat history.")
         st.balloons()
