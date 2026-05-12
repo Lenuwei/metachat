@@ -524,7 +524,7 @@ SCENARIO = {
             "next_state": "posttest",
         },
         "posttest": {
-            "message": "**📋 POST-TEST**\n\nRate the same three messages again:\n\n1▪️'Your idea is wrong. Fix it.'\n\n2▪️'I see your point, but have you considered... 🤔'\n\n3▪️'THIS IS TERRIBLE!!!'\n\n▶️ **Type three numbers (e.g., '1 5 2'):**",
+            "message": "**📋 POST-TEST**\n\nRate the same three messages again (on a scale from 1 (destructive) to 5 (constructive)):\n\n1▪️'Your idea is wrong. Fix it.'\n\n2▪️'I see your point, but have you considered... 🤔'\n\n3▪️'THIS IS TERRIBLE!!!'\n\n▶️ **Type three numbers (e.g., '1 5 2'):**",
             "input_type": "text",
             "validation": r"^[1-5] [1-5] [1-5]$",
             "next_state": "data_collection",
@@ -1200,14 +1200,14 @@ def get_llm_feedback(user_answer, role_name, user_name, level, task_question=Non
     prompt = (
         f"{THEORETICAL_BASE}\n\n"
         "Always use English to respond.\n"
-        "When discussing emojis, describe them in words (e.g., 'smiling face', 'angry face').\n"
         f"Student: {user_name}\nLevel: {level}\nSelected role: {role_name or 'none'}\n\n"
         f"--- TASK QUESTION ---\n{task_question}\n\n"
         f"--- STUDENT ANSWER ---\n{user_answer}\n\n"
         f"--- INSTRUCTION ---\n"
-        f"Evaluate the student's answer based on the theoretical framework above. "
+        f"Address the student by their name ({user_name}) in the first sentence. "
+        f"Evaluate their answer based on the theoretical framework above. "
         f"Check whether they identified/applied metagraheme tools correctly for their level. "
-        f"Give brief constructive feedback (max 500 characters). "
+        f"Give brief constructive feedback (max 500 characters, 2-4 sentences). "
         f"Be supportive and specific."
     )
 
@@ -1223,8 +1223,8 @@ def get_llm_feedback(user_answer, role_name, user_name, level, task_question=Non
     legacy_url = base + "/completions"
 
     attempts = [
-        ("chat", chat_url, {"model": LLM_MODEL, "messages": [{"role": "user", "content": prompt}], "max_tokens": 300}),
-        ("legacy", legacy_url, {"prompt": prompt, "max_tokens": 300}),
+        ("chat", chat_url, {"model": LLM_MODEL, "messages": [{"role": "user", "content": prompt}], "max_tokens": 150}),
+        ("legacy", legacy_url, {"prompt": prompt, "max_tokens": 150}),
     ]
 
     for label, url, payload in attempts:
