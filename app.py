@@ -229,7 +229,7 @@ SCENARIO = {
         "pretest": {
             "message": "**📋 PRE-TEST: Diagnostic Assessment**\n\nBefore we begin the training, please rate these three messages on a scale from 1 (destructive) to 5 (constructive):\n\n1▪️'Your idea is wrong. Fix it.'\n\n2▪️'I see your point, but have you considered... 🤔'\n\n3▪️'THIS IS TERRIBLE!!!'\n\n▶️ **Type three numbers separated by spaces (e.g., '1 5 2') and press Enter:**",
             "input_type": "text",
-            "validation": r"^[1-5] [1-5] [1-5]$",
+            "validation": r"^[1-5]\s+[1-5]\s+[1-5]$",
             "next_state": "level_assessment",
         },
         "level_assessment": {
@@ -365,10 +365,7 @@ SCENARIO = {
                 "continue": "View Available Roles",
                 "back": "Back to Main Menu",
             },
-            "next_state": {
-                "continue": "role_menu",
-                "back": "after_registration_{level}",
-            },
+            "next_state": "role_menu",
         },
         "role_menu": {
             "message": "**❇️ CONSTRUCTIVE COMMUNICATIVE ROLES**\n\nChoose a role to practice:\n\n**CONFLICT REGULATORS:**\n🔹1 - Mediator (de-escalates conflicts)\n🔹2 - Logical Expert (highlights contradictions)\n🔹6 - Advocate (defends a person/idea)\n🔹7 - Judge (evaluates arguments)\n🔹8 - Peacemaker (offers compromise)\n\n**SUPPORTING ROLES:**\n🔹3 - Idea Generator (creative thinking)\n🔹4 - Researcher (cultural inquiry)\n🔹5 - Interpreter (cultural bridging)\n\n**EMOTIONAL ROLES:**\n🔹9 - Empath (emotional support)\n\n📌 **Type the number (1-9) to choose a role, or type 'finish' to proceed to reflection:**",
@@ -526,7 +523,7 @@ SCENARIO = {
         "posttest": {
             "message": "**📋 POST-TEST**\n\nRate the same three messages again (on a scale from 1 (destructive) to 5 (constructive)):\n\n1▪️'Your idea is wrong. Fix it.'\n\n2▪️'I see your point, but have you considered... 🤔'\n\n3▪️'THIS IS TERRIBLE!!!'\n\n▶️ **Type three numbers (e.g., '1 5 2'):**",
             "input_type": "text",
-            "validation": r"^[1-5] [1-5] [1-5]$",
+            "validation": r"^[1-5]\s+[1-5]\s+[1-5]$",
             "next_state": "data_collection",
         },
         "data_collection": {
@@ -786,6 +783,33 @@ def process_input(user_input):
             )
             return
 
+    # ========== ОБРАБОТКА КОМАНДЫ 'back' В ПРЕТЕСТ И УРОВНЕ ==========
+    if st.session_state.current_state == "pretest":
+        if user_input.lower() == "back":
+            st.session_state.current_state = "start"
+            st.session_state.chat_history.append(
+                {
+                    "role": "assistant",
+                    "content": get_current_message(),
+                    "state": st.session_state.current_state,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
+            return
+
+    if st.session_state.current_state == "level_assessment":
+        if user_input.lower() == "back":
+            st.session_state.current_state = "pretest"
+            st.session_state.chat_history.append(
+                {
+                    "role": "assistant",
+                    "content": get_current_message(),
+                    "state": st.session_state.current_state,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
+            return
+
     # ========== ВАЛИДАЦИЯ ВВОДА (до сохранения в историю) ==========
     if "validation" in current_state_obj:
         if not re.match(current_state_obj["validation"], user_input):
@@ -803,9 +827,7 @@ def process_input(user_input):
 
     # ========== СОХРАНЯЕМ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ ==========
     if st.session_state.current_state == "start":
-        st.session_state.user_data["user_name"] = (
-            user_input.split()[0] if user_input.split() else user_input
-        )
+        st.session_state.user_data["user_name"] = user_input.strip()
         st.session_state.current_state = "pretest"
         st.session_state.chat_history.append(
             {
@@ -1041,7 +1063,7 @@ def process_input(user_input):
         else:
             return
 
-    # Для команды continue в roleplay_intro
+    # Для команды back в roleplay_intro
     if st.session_state.current_state == "roleplay_intro":
         if user_input.lower() == "continue":
             st.session_state.current_state = "role_menu"
@@ -1055,7 +1077,7 @@ def process_input(user_input):
             )
             return
         elif user_input.lower() == "back":
-            level = st.session_state.user_data.get("level", "beginner")
+            level = st.session_state.user_data.get("level", "intermediate")
             st.session_state.current_state = f"after_registration_{level}"
             st.session_state.chat_history.append(
                 {
