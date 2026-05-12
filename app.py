@@ -935,7 +935,7 @@ def process_input(user_input):
     # ========== ОБРАБОТКА КОМАНД В АНАЛИЗЕ ==========
     if "analysis_feedback_" in st.session_state.current_state:
         if user_input.lower() == "next":
-            if "task_1" in st.session_state.current_state:
+            if "feedback_1" in st.session_state.current_state:
                 new_state = st.session_state.current_state.replace(
                     "feedback_1", "task_2"
                 )
@@ -1286,10 +1286,20 @@ def main():
                 mime="application/json",
             )
 
-    # Поле ввода (ключ от состояния предотвращает дублирование на rerun)
+    # Отображение истории чата
+    for message in st.session_state.chat_history:
+        if message["role"] == "user":
+            st.chat_message("user").write(message["content"])
+        else:
+            with st.chat_message("assistant"):
+                st.markdown(message["content"])
+
+    # Поле ввода — форма с очисткой после отправки (надёжнее на мобильных)
     if st.session_state.current_state != "end":
-        user_input = st.chat_input("Type your answer here...", key=f"ci_{st.session_state.current_state}")
-        if user_input:
+        with st.form(key="chat_form", clear_on_submit=True):
+            user_input = st.text_input("Type your answer here...", placeholder="Type your answer here...")
+            submitted = st.form_submit_button("Send", type="primary", use_container_width=True)
+        if submitted and user_input:
             old_state = st.session_state.current_state
             process_input(user_input)
             if st.session_state.current_state != old_state:
@@ -1297,9 +1307,6 @@ def main():
     else:
         st.success("🎉 Session completed! Don't forget to export your chat history.")
         st.balloons()
-
-    # Отображение истории чата
-    for message in st.session_state.chat_history:
         if message["role"] == "user":
             st.chat_message("user").write(message["content"])
         else:
