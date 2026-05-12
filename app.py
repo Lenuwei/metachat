@@ -1293,10 +1293,14 @@ def main():
     if st.session_state.current_state != "end":
         user_input = st.chat_input("Type your answer here...")
         if user_input:
-            old_state = st.session_state.current_state
-            process_input(user_input)
-            if st.session_state.current_state != old_state:
-                st.rerun()
+            if st.session_state.pop("_skip_next", False):
+                pass
+            else:
+                old_state = st.session_state.current_state
+                process_input(user_input)
+                if st.session_state.current_state != old_state:
+                    st.session_state._skip_next = True
+                    st.rerun()
     else:
         st.success("🎉 Session completed! Don't forget to export your chat history.")
         st.balloons()
