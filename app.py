@@ -811,20 +811,43 @@ def process_input(user_input):
             )
             return
 
+    # ========== ОПРЕДЕЛЯЕМ, ЯВЛЯЕТСЯ ЛИ ВВОД КОМАНДОЙ ==========
+    user_input_lower = user_input.strip().lower()
+    is_command = False
+    
+    # States where common words are commands, not answers
+    command_states = {
+        "analysis_intro_": ["yes", "back"],
+        "analysis_feedback_1_": ["next", "back"],
+        "analysis_feedback_2_": ["next", "back"],
+        "roleplay_intro": ["continue", "back"],
+        "role_menu": ["finish", "back"],
+        "roleplay_feedback_": ["next", "back", "revise"],
+        "reflection": [],  # Reflection expects text, not commands
+        "data_collection": ["exit"],
+    }
+    
+    for state_pattern, commands in command_states.items():
+        if state_pattern in st.session_state.current_state and commands:
+            if user_input_lower in commands:
+                is_command = True
+                break
+    
     # ========== ВАЛИДАЦИЯ ВВОДА (до сохранения в историю) ==========
     if "validation" in current_state_obj:
         if not re.match(current_state_obj["validation"], user_input):
             return
 
-    # ========== СОХРАНЯЕМ ОТВЕТ В ИСТОРИЮ ==========
-    st.session_state.chat_history.append(
-        {
-            "role": "user",
-            "content": user_input,
-            "state": st.session_state.current_state,
-            "timestamp": datetime.now().isoformat(),
-        }
-    )
+    # ========== СОХРАНЯЕМ ОТВЕТ В ИСТОРИЮ (только если это не команда) ==========
+    if not is_command:
+        st.session_state.chat_history.append(
+            {
+                "role": "user",
+                "content": user_input,
+                "state": st.session_state.current_state,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
     # ========== СОХРАНЯЕМ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ ==========
     if st.session_state.current_state == "start":
