@@ -609,6 +609,13 @@ def init_session_state():
     """Инициализирует переменные состояния Streamlit"""
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
+        # Add welcome message as first bot message
+        st.session_state.chat_history.append({
+            "role": "assistant",
+            "content": "🔬 **WELCOME TO METACHAT TUTOR - RESEARCH EDITION**\n\n📝 **Type down your name and group (e.g., Aida V. 101 bsufl):**",
+            "state": "start",
+            "timestamp": datetime.now().isoformat(),
+        })
     if "current_state" not in st.session_state:
         st.session_state.current_state = "start"
     if "user_data" not in st.session_state:
@@ -773,6 +780,12 @@ def process_input(user_input):
             )
             return
 
+    # ========== ВАЛИДАЦИЯ ВВОДА (до сохранения в историю) ==========
+    if "validation" in current_state_obj:
+        if not re.match(current_state_obj["validation"], user_input):
+            st.warning("⚠️ Please enter the data in the correct format. Try again.")
+            return
+
     # ========== СОХРАНЯЕМ ОТВЕТ В ИСТОРИЮ ==========
     st.session_state.chat_history.append(
         {
@@ -782,12 +795,6 @@ def process_input(user_input):
             "timestamp": datetime.now().isoformat(),
         }
     )
-
-    # ========== ВАЛИДАЦИЯ ВВОДА ==========
-    if "validation" in current_state_obj:
-        if not re.match(current_state_obj["validation"], user_input):
-            st.warning("⚠️ Please enter the data in the correct format. Try again.")
-            return
 
     # ========== СОХРАНЯЕМ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ ==========
     if st.session_state.current_state == "start":
@@ -1247,10 +1254,6 @@ def main():
     # Инициализация
     init_session_state()
 
-    # Приветственное сообщение, если история пуста
-    if not st.session_state.chat_history:
-        st.info("📝 **Type down your name and group (e.g., Aida V. 101 bsufl)**")
-
     # Боковая панель
     with st.sidebar:
         st.header("📊 Session Info")
@@ -1287,10 +1290,16 @@ def main():
 
     # Поле ввода
     if st.session_state.current_state != "end":
-        user_input = st.chat_input("Type your answer here...")
+        user_input = st.text_input("Type your answer here...", key="input_main")
         if user_input:
-            process_input(user_input)
-            st.rerun()
+            last = st.session_state.get("_last", "")
+            if user_input != last:
+                st.session_state._last = user_input
+                old_state = st.session_state.current_state
+                process_input(user_input)
+                if st.session_state.current_state != old_state:
+                    st.session_state["input_main"] = ""
+                    st.rerun()
     else:
         st.success("🎉 Session completed! Don't forget to export your chat history.")
         st.balloons()
